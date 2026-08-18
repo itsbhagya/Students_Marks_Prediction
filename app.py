@@ -6,7 +6,7 @@ from flask import Flask, render_template_string, request
 app = Flask(__name__)
 
 # Load the trained linear regression model
-MODEL_PATH = "linear_model.pkl"
+MODEL_PATH = "Linear_model.pkl"
 model = None
 
 if os.path.exists(MODEL_PATH):
