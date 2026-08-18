@@ -5,20 +5,14 @@ from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
 
-# Load the trained linear regression model
-MODEL_PATH = "Linear_model.pkl"
-model = None
+# Base path setup
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "Linear_model.pkl")
 
+model = None
 if os.path.exists(MODEL_PATH):
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
-
-# Features expected by the model:
-# 1. Hours Studied
-# 2. Previous Scores
-# 3. Extracurricular Activities (Yes=1, No=0)
-# 4. Sleep Hours
-# 5. Sample Question Papers Practiced
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -27,11 +21,8 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Performance Predictor</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Canvas Confetti Library for Balloon/Confetti Effect -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -59,10 +50,6 @@ HTML_TEMPLATE = """
             text-align: center;
             margin-bottom: 25px;
         }
-        .form-label {
-            font-weight: 600;
-            color: #333;
-        }
         .btn-predict {
             background: linear-gradient(45deg, #ff416c, #ff4b2b);
             border: none;
@@ -86,11 +73,6 @@ HTML_TEMPLATE = """
             border-left: 5px solid #2196f3;
             border-radius: 10px;
             text-align: center;
-            animation: fadeIn 0.8s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -102,19 +84,19 @@ HTML_TEMPLATE = """
             <i class="fa-solid fa-graduation-cap"></i> Student Performance Predictor
         </h2>
         
-        <form action="/predict" method="POST">
+        <form action="/" method="POST">
             <div class="mb-3">
-                <label for="hours_studied" class="form-label">Hours Studied</label>
+                <label for="hours_studied" class="form-label fw-bold">Hours Studied</label>
                 <input type="number" step="0.1" class="form-control" id="hours_studied" name="hours_studied" placeholder="e.g., 7" required value="{{ request.form.get('hours_studied', '') }}">
             </div>
 
             <div class="mb-3">
-                <label for="previous_scores" class="form-label">Previous Scores (0-100)</label>
+                <label for="previous_scores" class="form-label fw-bold">Previous Scores (0-100)</label>
                 <input type="number" step="0.1" class="form-control" id="previous_scores" name="previous_scores" placeholder="e.g., 85" required value="{{ request.form.get('previous_scores', '') }}">
             </div>
 
             <div class="mb-3">
-                <label for="extracurricular" class="form-label">Extracurricular Activities</label>
+                <label for="extracurricular" class="form-label fw-bold">Extracurricular Activities</label>
                 <select class="form-select" id="extracurricular" name="extracurricular" required>
                     <option value="1" {% if request.form.get('extracurricular') == '1' %}selected{% endif %}>Yes</option>
                     <option value="0" {% if request.form.get('extracurricular') == '0' %}selected{% endif %}>No</option>
@@ -122,12 +104,12 @@ HTML_TEMPLATE = """
             </div>
 
             <div class="mb-3">
-                <label for="sleep_hours" class="form-label">Sleep Hours</label>
+                <label for="sleep_hours" class="form-label fw-bold">Sleep Hours</label>
                 <input type="number" step="0.1" class="form-control" id="sleep_hours" name="sleep_hours" placeholder="e.g., 8" required value="{{ request.form.get('sleep_hours', '') }}">
             </div>
 
             <div class="mb-3">
-                <label for="sample_papers" class="form-label">Sample Question Papers Practiced</label>
+                <label for="sample_papers" class="form-label fw-bold">Sample Question Papers Practiced</label>
                 <input type="number" class="form-control" id="sample_papers" name="sample_papers" placeholder="e.g., 5" required value="{{ request.form.get('sample_papers', '') }}">
             </div>
 
@@ -144,13 +126,10 @@ HTML_TEMPLATE = """
             <h2 class="fw-bold text-dark">{{ prediction_text }}</h2>
         </div>
         
-        <!-- Script to launch balloons / confetti effect on prediction output -->
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 var count = 200;
-                var defaults = {
-                    origin: { y: 0.7 }
-                };
+                var defaults = { origin: { y: 0.7 } };
 
                 function fire(particleRatio, opts) {
                     confetti(Object.assign({}, defaults, opts, {
@@ -158,31 +137,11 @@ HTML_TEMPLATE = """
                     }));
                 }
 
-                // Launching floating colorful balloons/confetti burst
-                fire(0.25, {
-                    spread: 26,
-                    startVelocity: 55,
-                    colors: ['#ff0000', '#00ff00', '#0000ff']
-                });
-                fire(0.2, {
-                    spread: 60,
-                    colors: ['#ffff00', '#ff00ff', '#00ffff']
-                });
-                fire(0.35, {
-                    spread: 100,
-                    decay: 0.91,
-                    scalar: 0.8
-                });
-                fire(0.1, {
-                    spread: 120,
-                    startVelocity: 25,
-                    decay: 0.92,
-                    colors: ['#ffffff', '#ffbb00']
-                });
-                fire(0.1, {
-                    spread: 120,
-                    startVelocity: 45,
-                });
+                fire(0.25, { spread: 26, startVelocity: 55, colors: ['#ff0000', '#00ff00', '#0000ff'] });
+                fire(0.2, { spread: 60, colors: ['#ffff00', '#ff00ff', '#00ffff'] });
+                fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+                fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, colors: ['#ffffff', '#ffbb00'] });
+                fire(0.1, { spread: 120, startVelocity: 45 });
             });
         </script>
         {% endif %}
@@ -193,35 +152,29 @@ HTML_TEMPLATE = """
 </html>
 """
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return render_template_string(HTML_TEMPLATE)
+    prediction_text = None
+    if request.method == "POST":
+        if model is None:
+            prediction_text = "Model pickle file not found!"
+        else:
+            try:
+                hours_studied = float(request.form["hours_studied"])
+                previous_scores = float(request.form["previous_scores"])
+                extracurricular = float(request.form["extracurricular"])
+                sleep_hours = float(request.form["sleep_hours"])
+                sample_papers = float(request.form["sample_papers"])
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    if model is None:
-        return render_template_string(HTML_TEMPLATE, prediction_text="Model pickle file not found!")
-    
-    try:
-        hours_studied = float(request.form["hours_studied"])
-        previous_scores = float(request.form["previous_scores"])
-        extracurricular = float(request.form["extracurricular"])
-        sleep_hours = float(request.form["sleep_hours"])
-        sample_papers = float(request.form["sample_papers"])
+                features = np.array([[hours_studied, previous_scores, extracurricular, sleep_hours, sample_papers]])
+                prediction = model.predict(features)[0]
+                output = round(float(prediction), 2)
 
-        # Create input array for the model
-        features = np.array([[hours_studied, previous_scores, extracurricular, sleep_hours, sample_papers]])
-        
-        # Make prediction
-        prediction = model.predict(features)[0]
-        
-        # Round the result to 2 decimal places
-        output = round(float(prediction), 2)
+                prediction_text = f"{output} / 100"
+            except Exception as e:
+                prediction_text = f"Error: {str(e)}"
 
-        return render_template_string(HTML_TEMPLATE, prediction_text=f"{output} / 100")
-    
-    except Exception as e:
-        return render_template_string(HTML_TEMPLATE, prediction_text=f"Error: {str(e)}")
+    return render_template_string(HTML_TEMPLATE, prediction_text=prediction_text)
 
 if __name__ == "__main__":
     app.run(debug=True)
