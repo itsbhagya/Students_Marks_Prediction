@@ -5,7 +5,7 @@ from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
 
-# Base path setup
+# Model File Path Setup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "Linear_model.pkl")
 
@@ -167,8 +167,11 @@ def home():
                 sample_papers = float(request.form["sample_papers"])
 
                 features = np.array([[hours_studied, previous_scores, extracurricular, sleep_hours, sample_papers]])
-                prediction = model.predict(features)[0]
-                output = round(float(prediction), 2)
+                
+                # Make prediction and safely convert result
+                prediction = model.predict(features)
+                val = float(np.ravel(prediction)[0])
+                output = round(val, 2)
 
                 prediction_text = f"{output} / 100"
             except Exception as e:
